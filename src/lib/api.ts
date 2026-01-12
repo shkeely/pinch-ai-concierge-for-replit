@@ -43,10 +43,16 @@ class ApiClient {
     };
 
     if (this.getToken) {
+      console.log('[API] Getting token from provider...');
       const token = await this.getToken();
+      console.log('[API] Token available:', !!token, token ? `(${token.substring(0, 20)}...)` : '');
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
+      } else {
+        console.warn('[API] No auth token available - request may fail');
       }
+    } else {
+      console.warn('[API] No token provider set up');
     }
 
     return headers;
@@ -64,7 +70,9 @@ class ApiClient {
     }
 
     try {
+      console.log('[API] GET request to:', path);
       const headers = await this.getHeaders();
+
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers,
@@ -83,7 +91,11 @@ class ApiClient {
 
   async post<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     try {
+      console.log('[API] POST request to:', path);
+      console.log('[API] POST body:', JSON.stringify(body));
       const headers = await this.getHeaders();
+      console.log('[API] Request headers keys:', Object.keys(headers));
+
       const response = await fetch(`${this.baseUrl}${path}`, {
         method: 'POST',
         headers,
@@ -103,7 +115,9 @@ class ApiClient {
 
   async patch<T>(path: string, body?: unknown): Promise<ApiResponse<T>> {
     try {
+      console.log('[API] PATCH request to:', path);
       const headers = await this.getHeaders();
+
       const response = await fetch(`${this.baseUrl}${path}`, {
         method: 'PATCH',
         headers,
@@ -123,7 +137,9 @@ class ApiClient {
 
   async delete<T>(path: string): Promise<ApiResponse<T>> {
     try {
+      console.log('[API] DELETE request to:', path);
       const headers = await this.getHeaders();
+
       const response = await fetch(`${this.baseUrl}${path}`, {
         method: 'DELETE',
         headers,
@@ -141,8 +157,11 @@ class ApiClient {
   }
 
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+    // First get the text to handle empty responses
     const text = await response.text();
+    console.log('[API] Response status:', response.status, 'Body length:', text.length);
 
+    // Handle empty response
     if (!text) {
       if (response.ok) {
         return { status: 'success', data: undefined as T };
@@ -154,10 +173,12 @@ class ApiClient {
       };
     }
 
+    // Try to parse as JSON
     let json;
     try {
       json = JSON.parse(text);
     } catch {
+      console.error('[API] Failed to parse response as JSON:', text.substring(0, 200));
       throw {
         status: 'error',
         code: 'PARSE_ERROR',
@@ -166,6 +187,8 @@ class ApiClient {
     }
 
     if (!response.ok) {
+      // Handle error responses
+      console.error('[API] Error response:', json);
       const error: ApiError = {
         status: 'error',
         code: json.code || `HTTP_${response.status}`,
@@ -175,6 +198,8 @@ class ApiClient {
       throw error;
     }
 
+    console.log('[API] Success response:', json);
+    // Return the full response object (includes status, data, pagination)
     return json as ApiResponse<T>;
   }
 }

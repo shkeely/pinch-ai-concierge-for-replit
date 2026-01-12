@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         serif: ['Lora', 'serif'],
         sans: ['Inter', 'sans-serif'],
+        display: ['Playfair Display', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -53,6 +54,7 @@ export default {
         sage: {
           DEFAULT: "hsl(var(--sage))",
         },
+        "border-subtle": "hsl(var(--border-subtle))",
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -60,16 +62,6 @@ export default {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
-        },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
         },
       },
       borderRadius: {
@@ -94,10 +86,103 @@ export default {
             height: "0",
           },
         },
+        "fade-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(10px)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)"
+          }
+        },
+        "fade-out": {
+          "0%": {
+            opacity: "1",
+            transform: "translateY(0)"
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(10px)"
+          }
+        },
+        "scale-in": {
+          "0%": {
+            transform: "scale(0.95)",
+            opacity: "0"
+          },
+          "100%": {
+            transform: "scale(1)",
+            opacity: "1"
+          }
+        },
+        "scale-out": {
+          "0%": {
+            transform: "scale(1)",
+            opacity: "1"
+          },
+          "100%": {
+            transform: "scale(0.95)",
+            opacity: "0"
+          }
+        },
+        "slide-in-right": {
+          "0%": {
+            transform: "translateX(100%)"
+          },
+          "100%": {
+            transform: "translateX(0)"
+          }
+        },
+        "slide-out-right": {
+          "0%": {
+            transform: "translateX(0)"
+          },
+          "100%": {
+            transform: "translateX(100%)"
+          }
+        },
+        "bounce-vertical": {
+          "0%, 100%": {
+            transform: "translateY(0)"
+          },
+          "50%": {
+            transform: "translateY(-10px)"
+          }
+        },
+        "bounce-horizontal": {
+          "0%, 100%": {
+            transform: "translateX(0)"
+          },
+          "50%": {
+            transform: "translateX(-10px)"
+          }
+        },
+        "ring-pulse": {
+          "0%, 100%": {
+            boxShadow: "0 0 0 4px rgba(147, 51, 234, 0.4), 0 0 20px rgba(147, 51, 234, 0.24)",
+            transform: "scale(1)"
+          },
+          "50%": {
+            boxShadow: "0 0 0 8px rgba(147, 51, 234, 0.08), 0 0 0px rgba(147, 51, 234, 0)",
+            transform: "scale(1.02)"
+          }
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "fade-in": "fade-in 0.3s ease-out",
+        "fade-out": "fade-out 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        "scale-out": "scale-out 0.2s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-out-right": "slide-out-right 0.3s ease-out",
+        "enter": "fade-in 0.3s ease-out, scale-in 0.2s ease-out",
+        "exit": "fade-out 0.3s ease-out, scale-out 0.2s ease-out",
+        "bounce-vertical": "bounce-vertical 1s ease-in-out infinite",
+        "bounce-horizontal": "bounce-horizontal 1s ease-in-out infinite",
+        "ring-pulse": "ring-pulse 2.5s ease-in-out infinite"
       },
     },
   },
