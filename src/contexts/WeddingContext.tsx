@@ -71,7 +71,7 @@ function apiToLocalWedding(api: ApiWedding, partners: Partner[] = []): Wedding {
     hotels: api.hotels || '',
     registry: api.registry || '',
     kidsPolicy: api.kids_policy || '',
-    customFAQs: [],
+    customFAQs: [], // Loaded separately from brain entries
     websiteUrl: api.website_url || '',
     chatbotSettings: {
       name: 'Concierge',
@@ -117,30 +117,41 @@ function localToApiWedding(local: Partial<Wedding>): Partial<ApiWedding> {
 }
 
 export function WeddingProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { user, session } = useAuth();
   const [wedding, setWedding] = useState<Wedding | null>(null);
   const [weddingId, setWeddingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conversations, setConversations] = useState<SimulatedMessage[]>([]);
 
+  // Load wedding when user logs in
   const loadWedding = async () => {
+    console.log('[WeddingContext] loadWedding called, session:', !!session);
+
     if (!session) {
+      console.log('[WeddingContext] No session, clearing wedding');
       setWedding(null);
       setWeddingId(null);
       return;
     }
 
+    console.log('[WeddingContext] Session token available:', !!session.access_token);
     setLoading(true);
     setError(null);
 
     try {
+      // Try to get existing wedding - the API should return the user's wedding
+      // For now, we'll store the wedding ID in localStorage after creation
       const storedWeddingId = localStorage.getItem('current_wedding_id');
+      console.log('[WeddingContext] Stored wedding ID:', storedWeddingId);
 
       if (storedWeddingId) {
+        console.log('[WeddingContext] Loading wedding:', storedWeddingId);
         const response = await apiClient.get<ApiWedding>(`/api/weddings/${storedWeddingId}`);
+        console.log('[WeddingContext] Wedding load response:', response);
 
         if (response.data) {
+          // Also fetch partners
           const partnersResponse = await apiClient.get<ApiPartner[]>('/api/partners', { wedding_id: storedWeddingId });
           const partners: Partner[] = (partnersResponse.data || []).map(p => ({
             id: p.id,
@@ -152,9 +163,16 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
           const loadedWedding = apiToLocalWedding(response.data, partners);
           setWedding(loadedWedding);
           setWeddingId(response.data.id);
+          console.log('[WeddingContext] Wedding loaded successfully');
         }
+      } else {
+        console.log('[WeddingContext] No stored wedding ID, user needs to create one');
       }
     } catch (err: any) {
+      console.error('[WeddingContext] Error loading wedding:', err);
+      console.error('[WeddingContext] Error code:', err.code);
+      console.error('[WeddingContext] Error message:', err.message);
+      // Don't set error for 404 - it just means no wedding exists yet
       if (err.code !== 'HTTP_404' && err.code !== 'NOT_FOUND') {
         setError(err.message || 'Failed to load wedding');
       }
@@ -163,6 +181,7 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Load wedding when session changes
   useEffect(() => {
     if (session) {
       loadWedding();
@@ -173,7 +192,12 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
   }, [session]);
 
   const createWedding = async (data: Partial<Wedding>): Promise<Wedding | null> => {
+    console.log('[WeddingContext] createWedding called');
+    console.log('[WeddingContext] Session available:', !!session);
+    console.log('[WeddingContext] Session token:', session?.access_token ? `${session.access_token.substring(0, 30)}...` : 'null');
+
     if (!session) {
+      console.error('[WeddingContext] No session available for createWedding');
       toast.error('Please sign in to create a wedding');
       return null;
     }
@@ -181,17 +205,24 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const apiData = localToApiWedding(data);
+      console.log('[WeddingContext] Creating wedding with data:', JSON.stringify(apiData));
+
       const response = await apiClient.post<ApiWedding>('/api/weddings', apiData);
+      console.log('[WeddingContext] Create wedding response:', response);
 
       if (response.data) {
         const newWedding = apiToLocalWedding(response.data);
         setWedding(newWedding);
         setWeddingId(response.data.id);
         localStorage.setItem('current_wedding_id', response.data.id);
+        console.log('[WeddingContext] Wedding created successfully:', response.data.id);
         return newWedding;
       }
       return null;
     } catch (err: any) {
+      console.error('[WeddingContext] Error creating wedding:', err);
+      console.error('[WeddingContext] Error code:', err.code);
+      console.error('[WeddingContext] Error message:', err.message);
       toast.error(err.message || 'Failed to create wedding');
       return null;
     } finally {
@@ -201,10 +232,12 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
 
   const updateWedding = async (updates: Partial<Wedding>) => {
     if (!weddingId) {
+      // If no wedding exists, create one
       await createWedding(updates);
       return;
     }
 
+    // Optimistic update
     setWedding(prev => prev ? { ...prev, ...updates } : null);
 
     try {
@@ -212,13 +245,16 @@ export function WeddingProvider({ children }: { children: ReactNode }) {
       const response = await apiClient.patch<ApiWedding>(`/api/weddings/${weddingId}`, apiData);
 
       if (response.data) {
+        // Update with server response
         setWedding(prev => {
           if (!prev) return null;
           return apiToLocalWedding(response.data!, prev.partners);
         });
       }
     } catch (err: any) {
+      console.error('Error updating wedding:', err);
       toast.error(err.message || 'Failed to save changes');
+      // Reload to get correct state
       loadWedding();
     }
   };
