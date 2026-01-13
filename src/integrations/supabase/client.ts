@@ -5,6 +5,9 @@ import type { Database } from './types';
 const SUPABASE_URL = 'https://bhtxgnqtnfvuehddkasg.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_FV9GdWPBR-SIzJk8bNGenQ_aFBLEccq';
 
+// Import the supabase client like this:
+// import { supabase } from "@/integrations/supabase/client";
+
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
     storage: localStorage,
@@ -12,5 +15,3 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true,
   }
 });
-
-export const isSupabaseConfigured = true;
