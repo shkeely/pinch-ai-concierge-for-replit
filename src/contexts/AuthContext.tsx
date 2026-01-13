@@ -21,9 +21,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Set up the token provider for the API client
+    console.log('[AuthContext] Setting up token provider');
     apiClient.setTokenProvider(async () => {
+      console.log('[AuthContext] Token provider called');
       const { data } = await supabase.auth.getSession();
-      return data.session?.access_token ?? null;
+      const token = data.session?.access_token ?? null;
+      console.log('[AuthContext] Token from getSession:', token ? `${token.substring(0, 20)}...` : 'null');
+      return token;
     });
 
     // Set up auth state listener FIRST
