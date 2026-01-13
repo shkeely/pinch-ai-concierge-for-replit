@@ -29,26 +29,29 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { useGuestsApi, Guest } from '@/hooks/useGuestsApi';
-import { useSegmentsApi, Segment } from '@/hooks/useSegmentsApi';
+import { useWedding } from '@/contexts/WeddingContext';
+import { useGuests, useDeleteGuest } from '@/hooks/useGuestsApi';
+import { useSegments } from '@/hooks/useSegmentsApi';
 import { toast } from 'sonner';
 
 const ITEMS_PER_PAGE = 10;
 
 export default function Guests() {
-  const { guests, loading: guestsLoading, fetchGuests, createGuest, updateGuest, deleteGuest } = useGuestsApi();
-  const { segments, loading: segmentsLoading, fetchSegments } = useSegmentsApi();
+  const { weddingId } = useWedding();
+  const { data: guestsData, isLoading: guestsLoading } = useGuests({ 
+    weddingId: weddingId || '', 
+    page: 1, 
+    pageSize: 100 
+  });
+  const { data: segmentsData, isLoading: segmentsLoading } = useSegments(weddingId || '');
+  const deleteGuestMutation = useDeleteGuest();
+  
+  const guests = guestsData?.guests || [];
+  const segments = segmentsData || [];
   
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSegment, setSelectedSegment] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [newGuest, setNewGuest] = useState({ name: '', phone: '', email: '', segment_ids: [] as string[] });
-
-  useEffect(() => {
-    fetchGuests();
-    fetchSegments();
-  }, []);
 
   // Filter guests
   const filteredGuests = guests.filter(guest => {
@@ -57,7 +60,7 @@ export default function Guests() {
       guest.email?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesSegment = selectedSegment === 'all' || 
-      guest.segment_ids?.includes(selectedSegment);
+      guest.segments?.includes(selectedSegment);
     
     return matchesSearch && matchesSegment;
   });
@@ -69,31 +72,27 @@ export default function Guests() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  const handleAddGuest = async () => {
-    if (!newGuest.name.trim()) {
-      toast.error('Please enter a guest name');
-      return;
-    }
-
-    await createGuest(newGuest);
-    setNewGuest({ name: '', phone: '', email: '', segment_ids: [] });
-    setShowAddDialog(false);
-  };
-
   const handleDeleteGuest = async (id: string) => {
     if (confirm('Are you sure you want to delete this guest?')) {
-      await deleteGuest(id);
+      try {
+        await deleteGuestMutation.mutateAsync(id);
+        toast.success('Guest deleted');
+      } catch (error) {
+        toast.error('Failed to delete guest');
+      }
     }
   };
 
-  const getSegmentName = (segmentId: string) => {
-    const segment = segments.find(s => s.id === segmentId);
-    return segment?.name || 'Unknown';
+  const getSegmentName = (segmentName: string) => {
+    const segment = segments.find(s => s.name === segmentName);
+    return segment?.name || segmentName;
   };
 
-  const getSegmentColor = (segmentId: string) => {
-    const segment = segments.find(s => s.id === segmentId);
-    return segment?.color || '#6b7280';
+  // Generate a consistent color based on segment name
+  const getSegmentColor = (segmentName: string) => {
+    const colors = ['#5b6850', '#b7c4f1', '#c8e6c9', '#e1bee7', '#ffe0b2', '#b2dfdb'];
+    const index = segmentName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % colors.length;
+    return colors[index];
   };
 
   if (guestsLoading || segmentsLoading) {
@@ -125,7 +124,7 @@ export default function Guests() {
               <Upload className="w-4 h-4 mr-2" />
               Import
             </Button>
-            <Button onClick={() => setShowAddDialog(true)}>
+            <Button>
               <Plus className="w-4 h-4 mr-2" />
               Add Guest
             </Button>
@@ -161,7 +160,7 @@ export default function Guests() {
               <SelectContent>
                 <SelectItem value="all">All Segments</SelectItem>
                 {segments.map((segment) => (
-                  <SelectItem key={segment.id} value={segment.id}>
+                  <SelectItem key={segment.id} value={segment.name}>
                     {segment.name}
                   </SelectItem>
                 ))}
@@ -199,16 +198,16 @@ export default function Guests() {
                     <TableCell>{guest.email || '-'}</TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
-                        {guest.segment_ids?.map((segmentId) => (
+                        {guest.segments?.map((segmentName) => (
                           <Badge 
-                            key={segmentId}
+                            key={segmentName}
                             variant="secondary"
                             style={{ 
-                              backgroundColor: `${getSegmentColor(segmentId)}20`,
-                              color: getSegmentColor(segmentId)
+                              backgroundColor: `${getSegmentColor(segmentName)}20`,
+                              color: getSegmentColor(segmentName)
                             }}
                           >
-                            {getSegmentName(segmentId)}
+                            {getSegmentName(segmentName)}
                           </Badge>
                         ))}
                       </div>
@@ -263,14 +262,14 @@ export default function Guests() {
 
         {/* Segments Summary */}
         <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-          {segments.map((segment) => {
-            const count = guests.filter(g => g.segment_ids?.includes(segment.id)).length;
+        {segments.map((segment) => {
+            const count = guests.filter(g => g.segments?.includes(segment.name)).length;
             return (
               <Card key={segment.id} className="p-4">
                 <div className="flex items-center gap-2 mb-1">
                   <div 
                     className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: segment.color }}
+                    style={{ backgroundColor: getSegmentColor(segment.name) }}
                   />
                   <span className="font-medium text-sm">{segment.name}</span>
                 </div>

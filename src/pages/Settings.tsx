@@ -13,18 +13,18 @@ import {
   Bell,
   Palette,
   MessageSquare,
-  Shield,
   Save
 } from 'lucide-react';
+import { Tone, UnknownAnswerBehavior, NotificationFrequency } from '@/types/wedding';
 
 export default function Settings() {
   const { wedding, updateWedding } = useWedding();
   const [saving, setSaving] = useState(false);
 
   const [chatbotName, setChatbotName] = useState(wedding?.chatbotSettings?.name || 'Concierge');
-  const [tone, setTone] = useState(wedding?.chatbotSettings?.tone || 'warm');
-  const [unknownAnswer, setUnknownAnswer] = useState(wedding?.chatbotSettings?.unknownAnswer || 'escalate');
-  const [notifications, setNotifications] = useState(wedding?.chatbotSettings?.notifications || 'daily');
+  const [tone, setTone] = useState<Tone>(wedding?.chatbotSettings?.tone || 'warm');
+  const [unknownAnswer, setUnknownAnswer] = useState<UnknownAnswerBehavior>(wedding?.chatbotSettings?.unknownAnswer || 'escalate');
+  const [notifications, setNotifications] = useState<NotificationFrequency>(wedding?.chatbotSettings?.notifications || 'daily');
 
   const handleSave = async () => {
     setSaving(true);
@@ -32,9 +32,9 @@ export default function Settings() {
       await updateWedding({
         chatbotSettings: {
           name: chatbotName,
-          tone: tone as 'warm' | 'formal' | 'fun',
-          unknownAnswer: unknownAnswer as 'escalate' | 'fallback',
-          notifications: notifications as 'instant' | 'daily' | 'off'
+          tone,
+          unknownAnswer,
+          notifications
         }
       });
       toast.success('Settings saved successfully');
@@ -99,7 +99,7 @@ export default function Settings() {
 
             <Card className="p-6">
               <h2 className="text-lg font-serif font-semibold mb-4">Response Tone</h2>
-              <RadioGroup value={tone} onValueChange={setTone} className="space-y-3">
+              <RadioGroup value={tone} onValueChange={(value) => setTone(value as Tone)} className="space-y-3">
                 <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value="warm" id="warm" />
                   <Label htmlFor="warm" className="flex-1 cursor-pointer">
@@ -132,7 +132,7 @@ export default function Settings() {
 
             <Card className="p-6">
               <h2 className="text-lg font-serif font-semibold mb-4">Unknown Questions</h2>
-              <RadioGroup value={unknownAnswer} onValueChange={setUnknownAnswer} className="space-y-3">
+              <RadioGroup value={unknownAnswer} onValueChange={(value) => setUnknownAnswer(value as UnknownAnswerBehavior)} className="space-y-3">
                 <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                   <RadioGroupItem value="escalate" id="escalate" />
                   <Label htmlFor="escalate" className="flex-1 cursor-pointer">
@@ -143,11 +143,20 @@ export default function Settings() {
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="fallback" id="fallback" />
-                  <Label htmlFor="fallback" className="flex-1 cursor-pointer">
-                    <span className="font-medium">Use Fallback Response</span>
+                  <RadioGroupItem value="generic" id="generic" />
+                  <Label htmlFor="generic" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Use Generic Response</span>
                     <p className="text-sm text-muted-foreground">
                       Provide a polite generic response automatically
+                    </p>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <RadioGroupItem value="website" id="website" />
+                  <Label htmlFor="website" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Redirect to Website</span>
+                    <p className="text-sm text-muted-foreground">
+                      Direct guests to your wedding website for more info
                     </p>
                   </Label>
                 </div>
@@ -159,11 +168,11 @@ export default function Settings() {
           <TabsContent value="notifications" className="space-y-6">
             <Card className="p-6">
               <h2 className="text-lg font-serif font-semibold mb-4">Notification Frequency</h2>
-              <RadioGroup value={notifications} onValueChange={setNotifications} className="space-y-3">
+              <RadioGroup value={notifications} onValueChange={(value) => setNotifications(value as NotificationFrequency)} className="space-y-3">
                 <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="instant" id="instant" />
-                  <Label htmlFor="instant" className="flex-1 cursor-pointer">
-                    <span className="font-medium">Instant</span>
+                  <RadioGroupItem value="realtime" id="realtime" />
+                  <Label htmlFor="realtime" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Real-time</span>
                     <p className="text-sm text-muted-foreground">
                       Get notified immediately for escalated questions
                     </p>
@@ -179,11 +188,11 @@ export default function Settings() {
                   </Label>
                 </div>
                 <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                  <RadioGroupItem value="off" id="off" />
-                  <Label htmlFor="off" className="flex-1 cursor-pointer">
-                    <span className="font-medium">Off</span>
+                  <RadioGroupItem value="weekly" id="weekly" />
+                  <Label htmlFor="weekly" className="flex-1 cursor-pointer">
+                    <span className="font-medium">Weekly</span>
                     <p className="text-sm text-muted-foreground">
-                      No notifications - check manually
+                      Receive a summary once per week
                     </p>
                   </Label>
                 </div>

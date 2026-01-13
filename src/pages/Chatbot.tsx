@@ -12,29 +12,19 @@ import { toast } from 'sonner';
 import { 
   Brain, 
   MessageSquare, 
-  Settings, 
   Plus, 
   Trash2, 
   Edit2,
-  ChevronRight,
   Sparkles,
-  AlertCircle,
-  CheckCircle
+  AlertCircle
 } from 'lucide-react';
-
-interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-}
+import { FAQ } from '@/types/wedding';
 
 export default function Chatbot() {
   const { wedding, updateWedding } = useWedding();
   const [faqs, setFaqs] = useState<FAQ[]>(wedding?.customFAQs || []);
   const [newQuestion, setNewQuestion] = useState('');
   const [newAnswer, setNewAnswer] = useState('');
-  const [editingId, setEditingId] = useState<string | null>(null);
   const [escalationKeywords, setEscalationKeywords] = useState<string[]>([
     'urgent', 'emergency', 'help', 'problem', 'issue'
   ]);
@@ -47,10 +37,8 @@ export default function Chatbot() {
     }
 
     const newFaq: FAQ = {
-      id: Date.now().toString(),
       question: newQuestion,
       answer: newAnswer,
-      category: 'custom'
     };
 
     const updatedFaqs = [...faqs, newFaq];
@@ -61,8 +49,8 @@ export default function Chatbot() {
     toast.success('FAQ added successfully');
   };
 
-  const handleDeleteFAQ = (id: string) => {
-    const updatedFaqs = faqs.filter(faq => faq.id !== id);
+  const handleDeleteFAQ = (index: number) => {
+    const updatedFaqs = faqs.filter((_, i) => i !== index);
     setFaqs(updatedFaqs);
     updateWedding({ customFAQs: updatedFaqs });
     toast.success('FAQ deleted');
@@ -155,8 +143,8 @@ export default function Chatbot() {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {faqs.map((faq) => (
-                    <div key={faq.id} className="border rounded-lg p-4">
+                  {faqs.map((faq, index) => (
+                    <div key={index} className="border rounded-lg p-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <p className="font-medium mb-1">{faq.question}</p>
@@ -169,7 +157,7 @@ export default function Chatbot() {
                           <Button 
                             variant="ghost" 
                             size="icon"
-                            onClick={() => handleDeleteFAQ(faq.id)}
+                            onClick={() => handleDeleteFAQ(index)}
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
