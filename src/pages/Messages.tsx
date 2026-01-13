@@ -7,7 +7,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   MessageSquare, 
   Search, 
-  Filter,
   AlertCircle,
   CheckCircle,
   Clock,
@@ -23,7 +22,7 @@ interface Message {
   guestPhone: string;
   content: string;
   response?: string;
-  timestamp: Date;
+  timestamp: string;
   status: 'answered' | 'pending' | 'escalated';
   isFromBot: boolean;
 }
@@ -36,7 +35,7 @@ const mockMessages: Message[] = [
     guestPhone: '+1 555-0101',
     content: 'What time does the ceremony start?',
     response: 'The ceremony begins at 4:00 PM. Please arrive 15-20 minutes early to find your seats!',
-    timestamp: new Date(Date.now() - 1000 * 60 * 30),
+    timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
     status: 'answered',
     isFromBot: true
   },
@@ -46,7 +45,7 @@ const mockMessages: Message[] = [
     guestPhone: '+1 555-0102',
     content: 'Is there parking available at the venue?',
     response: 'Yes! Complimentary valet parking is available at the main entrance of the venue.',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
     status: 'answered',
     isFromBot: true
   },
@@ -55,7 +54,7 @@ const mockMessages: Message[] = [
     guestName: 'Emily Davis',
     guestPhone: '+1 555-0103',
     content: 'I have a dietary restriction - are there vegetarian options?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
     status: 'escalated',
     isFromBot: false
   },
@@ -64,7 +63,7 @@ const mockMessages: Message[] = [
     guestName: 'James Wilson',
     guestPhone: '+1 555-0104',
     content: 'Can I bring my kids to the reception?',
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8),
+    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
     status: 'pending',
     isFromBot: false
   }
